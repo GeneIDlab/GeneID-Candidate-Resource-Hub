@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>GeneID Candidate Hub</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Segoe UI',sans-serif;background:#f7fafa;min-height:100vh}
+  button{font-family:'Segoe UI',sans-serif;cursor:pointer}
+  a{font-family:'Segoe UI',sans-serif}
+  ::-webkit-scrollbar{width:6px;height:6px}
+  ::-webkit-scrollbar-track{background:#f0f4f3}
+  ::-webkit-scrollbar-thumb{background:#0a7c6e55;border-radius:3px}
+  table{border-collapse:collapse;width:100%}
+  pre{white-space:pre-wrap;font-family:'Segoe UI',sans-serif}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const {useState} = React;
+
+const TEAL="#0a7c6e",TEAL_DARK="#065a50",TEAL_LIGHT="#e6f4f1",TEAL_MID="#14a896",
+      NAVY="#0d2b3e",GOLD="#f0a500",WHITE="#ffffff",LG="#f7fafa",
+      purple="#5a3e8e",pink="#b5436a",green="#2d7a4f",orange="#c05000";
+
+const tabs=[
+  {id:"about",label:"About the Role",icon:"🎯"},
+  {id:"process",label:"Interview Process",icon:"📋"},
+  {id:"products",label:"Products",icon:"🧬"},
+  {id:"accounts",label:"Account Models",icon:"🏥"},
+  {id:"salestools",label:"Sales Tools",icon:"💬"},
+  {id:"handbook",label:"Rep Handbook",icon:"📖"},
+  {id:"kpis",label:"KPIs & Expectations",icon:"📊"},
+  {id:"objections",label:"Objection Handler",icon:"🛡️"},
+  {id:"whygeneid",label:"Why GeneID",icon:"⭐"},
+  {id:"workflow",label:"Referral Workflow",icon:"🔄"},
+  {id:"insights",label:"Insights Sell Sheet",icon:"🤖"},
+  {id:"competitive",label:"Competitor Analysis",icon:"⚡"},
+  {id:"training",label:"Sales Training",icon:"🎓"},
+  {id:"deck",label:"Meeting Deck",icon:"📊"},
+];
+
+const products=[
+  {name:"PrevenTest™",subtitle:"Hereditary Cancer Risk",color:purple,icon:"🎗️",
+   who:"Personal/family history of: Breast, Ovarian, Pancreatic, Endometrial, Colorectal, Stomach, Melanoma, Prostate, or known BRCA/Lynch mutations",
+   what:"Screens 36+ genes for inherited mutations linked to 8 cancer types.",
+   why:"5–10% of cancers are hereditary. Under the ACA, BRCA1/2 testing is a mandated preventive benefit — $0 cost-sharing for qualifying patients.",
+   stats:["36+ genes screened","10% of patients test positive","ACA mandates BRCA1/2 at $0","98% pay $0 out of pocket","Self-pay: $999"],
+   pitch:"Doctor, 5–10% of cancers are hereditary — and most patients who carry mutations have no family history. Under the ACA, BRCA1/2 testing is a mandated preventive service. Most qualifying patients pay absolutely nothing. One 30-second mouthwash — we handle insurance, PAs, and counseling."},
+  {name:"NewbornGeneID™",subtitle:"Carrier Screening",color:pink,icon:"👶",
+   who:"All patients aged 18–50, planning a family, currently pregnant, or with a family history of a carrier condition",
+   what:"Saliva test screening for 68+ hereditary diseases — cystic fibrosis, sickle cell, SMA, Tay-Sachs, and more.",
+   why:"1 in 4 patients are carriers. 80% have no known family history. ACOG & ACMG recommend for ALL reproductive-age patients.",
+   stats:["68+ conditions screened","1 in 4 patients are silent carriers","80% no family history","Self-pay: $249"],
+   pitch:"1 in 4 patients in your waiting room right now are carriers for a genetic disease — and they have no idea. A simple saliva swab, handled entirely by our team, gives your patients life-changing information."},
+  {name:"Pharmacogenomics™",subtitle:"PGx – Medication Optimization",color:green,icon:"💊",
+   who:"Patients on chronic meds, multiple medications, experiencing side effects, poor drug response, or starting new medications",
+   what:"Identifies how a patient's genes affect drug metabolism. Covers Cardiovascular, Psych, Pain/Neuro, and Other panels.",
+   why:"ADRs are the 4th leading cause of death. 100,000 deaths and 1.3M injuries annually. 75%+ of people metabolize drugs differently.",
+   stats:["4th leading cause of death: ADRs","75%+ have non-normal metabolism","4 panels available","Medicare auto-pharmacist referral","Self-pay: $300"],
+   pitch:"Adverse drug reactions are the 4th leading cause of death in the US. PGx testing tells you exactly how patients metabolize drugs so you can prescribe with precision."},
+  {name:"Envisage GeneID™",subtitle:"NIPT – Prenatal Screening",color:GOLD,icon:"🤰",
+   who:"All pregnant patients — ACOG recommends NIPT for ALL patients regardless of age or baseline risk, starting at 10 weeks",
+   what:"Non-invasive prenatal test screening for Down Syndrome, Edwards, Patau, sex chromosome conditions, microdeletions, and gender.",
+   why:"ACOG, SMFM, and ISPD all recommend cfDNA screening as a primary test offered to all pregnant women.",
+   stats:["Results in 3–7 days","From 10 weeks gestation","Single blood draw","Expanded panel: 6 microdeletions","Self-pay: $300"],
+   pitch:"ACOG now recommends NIPT be offered to ALL pregnant patients — not just high-risk. One blood draw. We verify insurance before running any test."},
+  {name:"Xenome™",subtitle:"Whole Exome Sequencing",color:orange,icon:"🔬",
+   who:"Pediatric patients with autism, epilepsy, developmental delays, or congenital anomalies. Adults with rare/undiagnosed conditions.",
+   what:"Analyzes ~20,000 protein-coding genes. Solo, duo, or trio analysis available.",
+   why:"80% of rare diseases are genetic. Trio analysis increases diagnostic yield 15–20%.",
+   stats:["~20,000 genes analyzed","Trio increases yield 15–20%","ACMG-supported","Primary focus: pediatric autism & epilepsy"],
+   pitch:"For patients with complex presentations — especially children with autism or epilepsy — Xenome analyzes all 20,000 protein-coding genes in a single test, providing answers that guide the treatment path forward."},
+];
+
+const accountModels=[
+  {key:"gts",icon:"🏥",title:"GTS In-Office Collector",color:TEAL,
+   subtitle:"A trained Genetic Testing Specialist works in the provider's office",
+   overview:"GeneID's flagship model. A certified GTS is placed directly in the practice, working between the MA and provider visit — a gap that already exists in the workflow. The GTS handles all screening, collection, documentation, and follow-up.",
+   whoFor:"Primary Care, OB/GYN, Internal Medicine. Minimum 20 patients/day; 30+ preferred. Note: All states except TX can only test PPO patients.",
+   steps:["GTS arrives on scheduled screening days","Screens patients using GetGeneID proprietary software","Eligible patients provide a 30-second mouthwash sample","GeneID handles all insurance verification and prior authorizations","Provider reviews results in the portal"],
+   closedWon:"NCF and BAA signed. Move to Vetting/Onboarding Scheduled → New GTS Account → Active (first screening day complete)."},
+  {key:"insights",icon:"🤖",title:"GeneID Insights Account",color:purple,
+   subtitle:"AI-powered EMR scanning to identify eligible patients automatically",
+   overview:"An algorithm-driven platform that scans a practice's EMR using ICD-10 codes, medications, and clinical flags to generate a customized report of patients who may meet medical necessity for testing. No IT integration required.",
+   whoFor:"Any practice with an EMR and 500+ patient panel. 12-month contract with 90-day trial; $199/month after trial.",
+   steps:["GeneID gains secure EMR access","Algorithm scans against NCCN, ACOG, FDA & CPIC criteria","Patient report reviewed by provider before outreach begins","GeneID outreach team contacts patients using the practice's branding","Insurance verified before every test"],
+   closedWon:"All paperwork signed. Move to New Insights Account → Active (first patient report generated and reviewed)."},
+  {key:"sr",icon:"📦",title:"Self-Referral / Kit Account",color:GOLD,
+   subtitle:"Practice refers patients directly; GeneID manages the full patient journey",
+   overview:"The provider identifies and refers eligible patients directly to GeneID. GeneID's Patient Support Team manages the entire journey — from outreach and insurance verification to kit shipment and results delivery.",
+   whoFor:"Smaller practices or satellite offices. Ideal entry point. Commission eligibility begins at 5+ completed tests/month.",
+   steps:["Provider discusses testing with patient during visit","Practice faxes referral packet to (908) 791-5402","GeneID Patient Support contacts patient and verifies insurance","Kits ship to patient home; orders sent to provider for signature","Results delivered via portal; counseling coordinated for positives"],
+   closedWon:"BAA and NCF signed. Move to New Self-Referral Account → Active (first referral submitted and processed)."},
+];
+
+const trainingSummaries=[
+  {title:"The Process & Billing",color:NAVY,points:["GTS handles: eligibility screening via GetGeneID, sample collection, insurance verification, PA, packaging/shipping","ACA mandates BRCA1/2 as a preventive benefit: $0 deductible, $0 copay, $0 coinsurance for qualifying patients","98% of patients pay $0 out of pocket; 90% of tests approved","GeneID does NOT balance bill. EOB is not a bill.","Self-pay: Cancer Risk $999 | Carrier $249 | PGx $300 | NIPT $300","GINA Act protects patients — genetic results CANNOT affect health insurance","All states except TX: PPO patients only"]},
+  {title:"PrevenTest – Hereditary Cancer",color:purple,points:["Screens 36+ cancer genes across 8 cancer types","ACA mandates BRCA1/2 at $0 cost-sharing for qualifying patients","~10% of patients test positive with an actionable result","Preventative options reduce breast cancer risk from 72% → 5%","Positive results: free genetic counseling coordinated by GeneID"]},
+  {title:"NewbornGeneID – Carrier Screening",color:pink,points:["1 in 4 patients are carriers; 80% have no family history","Recommended for ALL reproductive-age adults by ACOG and ACMG","If both partners positive → 25% chance per pregnancy","Options: natural conception, IVF with PGD, donor egg/sperm, adoption","Self-pay: $249"]},
+  {title:"Pharmacogenomics – PGx",color:green,points:["Tests metabolizer status: Poor / Intermediate / Normal / Ultra-Rapid","4 panels: Cardiovascular, Psych, Pain/Neuro, Other","ADRs = 4th leading cause of death; 100,000 deaths and 1.3M injuries annually","All Medicare patients receive automatic pharmacist referral through GeneID","Best candidates: polypharmacy, side effects, poor response, new therapy"]},
+];
+
+const objections=[
+  {q:'"We already work with Myriad / Natera / Ambry."',tag:"Competitor",a:"Great — those are solid labs for specific tests. What GeneID brings is different: a fully supported, turnkey in-office program. We put a certified GTS in your office and handle all prior authorizations, insurance verification, and patient outreach. Most labs send you a kit and a portal. We send you a team."},
+  {q:'"My patients can\'t afford genetic testing."',tag:"Cost",a:"Under the ACA, BRCA1/2 testing is a mandated preventive benefit — qualifying patients pay $0, no deductible, no copay, no coinsurance. And we never run any test without insurance approval first. If there's any patient cost, we contact them directly before proceeding. Zero surprise bills."},
+  {q:'"I don\'t have time or staff bandwidth."',tag:"Workflow",a:"That's exactly why we built the program this way. Our GTS comes in between the MA and provider — a gap that already exists in your workflow. The practice doesn't take on extra administrative burden."},
+  {q:'"I\'m not sure which patients qualify."',tag:"Criteria",a:"Neither do most practices — that's what GetGeneID solves. NCCN, ACOG, FDA/CPIC, and insurance-specific criteria are built in. Our GTS runs through it with each patient automatically."},
+  {q:'"What\'s the legal commitment?"',tag:"Legal",a:"Minimal. No exclusivity contract. The only paperwork is a BAA and a New Client Form — standard HIPAA documents. You can start Monday and stop any time."},
+  {q:'"We tried genetic testing before and it was a headache."',tag:"Past Exp.",a:"That's a common story — usually because the lab handed you the complexity without the support. We specifically designed our program around provider pain points. Insurance chaos, billing confusion, unclear results — we handle all of that."},
+  {q:'"How do I handle positive results?"',tag:"Results",a:"Every positive is reviewed by Dr. Garcia, our Medical Director. He's the primary clinical contact for all results questions, and we coordinate genetic counseling for every positive finding."},
+  {q:'"What does this actually do for my practice?"',tag:"Value",a:"Positive results drive meaningful follow-up — important clinical touchpoints. Medicare PGx patients receive an automatic pharmacist referral. You're delivering a higher standard of preventative care to your entire panel."},
+];
+
+const criteria=[
+  {label:"In-Office GTS Specialist",geneid:true,natera:false,myriad:false,ambry:false},
+  {label:"Verification-First (No Test Without Approval)",geneid:true,natera:false,myriad:"Partial",ambry:"Partial"},
+  {label:"ACA BRCA1/2 $0 Cost-Sharing",geneid:true,natera:true,myriad:true,ambry:true},
+  {label:"AI-Powered EMR Patient ID",geneid:true,natera:false,myriad:false,ambry:"CARE Pgm"},
+  {label:"Branded Co-Marketing Campaign",geneid:true,natera:false,myriad:false,ambry:false},
+  {label:"Proprietary Screening Software",geneid:true,natera:false,myriad:false,ambry:false},
+  {label:"Hereditary Cancer Testing",geneid:true,natera:true,myriad:true,ambry:true},
+  {label:"Carrier Screening",geneid:true,natera:true,myriad:true,ambry:true},
+  {label:"Pharmacogenomics",geneid:true,natera:false,myriad:true,ambry:true},
+  {label:"NIPT / Prenatal Testing",geneid:true,natera:true,myriad:true,ambry:true},
+  {label:"Whole Exome Sequencing",geneid:true,natera:"Limited",myriad:true,ambry:true},
+  {label:"Medicare Auto-Pharmacist Referral",geneid:true,natera:false,myriad:false,ambry:false},
+];
+
+const deckSlides=[
+  {type:"title",title:"Transforming Preventative Care\nThrough Genetic Medicine",subtitle:"A Practice Partnership Proposal",notes:"Open with a question — 'In the last year, how many of your patients have you been able to proactively screen for hereditary cancer risk?' Let silence sit."},
+  {type:"stat",title:"The Preventative Medicine Gap",stats:[{value:"5–10%",label:"of cancers are hereditary — most carriers have NO family history",color:"#c0392b"},{value:"1 in 4",label:"patients are silent carriers for a serious inherited condition",color:purple},{value:"75%+",label:"of people metabolize medications outside of 'normal'",color:green},{value:"ACA",label:"mandates BRCA1/2 at $0 cost-sharing for qualifying patients",color:TEAL_DARK}],notes:"Pause on the first stat. The lack of family history is counterintuitive and resonates strongly with providers."},
+  {type:"solution",title:"The GeneID Model: We Handle the Complexity",pillars:[{icon:"👩‍⚕️",title:"In-Office GTS Specialist",desc:"Works between the MA and provider. Zero workflow change."},{icon:"✅",title:"Verification-First Billing",desc:"No test runs without insurance approval."},{icon:"💳",title:"ACA BRCA1/2 Mandate",desc:"$0 cost-sharing for qualifying patients."},{icon:"🤖",title:"AI Patient Identification",desc:"GeneID Insights flags eligible patients from your EMR."},{icon:"👨‍⚕️",title:"Medical Director Oversight",desc:"Dr. Garcia reviews all positives."},{icon:"💻",title:"GetGeneID Software",desc:"NCCN, ACOG, and insurance criteria built in."}],notes:"Walk each pillar. Ask 'which of these would make the biggest difference for your practice?'"},
+  {type:"proof",title:"Real Results from a Real Practice",headline:"176 patients screened in 15 weeks.",metrics:[{value:"9",label:"Hereditary cancer risks identified",color:"#c0392b"},{value:"4",label:"Carrier positives found",color:"#2980b9"},{value:"7",label:"Medicare PGx cases enrolled",color:GOLD},{value:"176",label:"Total patients screened",color:TEAL}],notes:"Let the numbers land. Then: 'Based on your panel size, how many patients do you think might benefit from screening?'"},
+  {type:"close",title:"The Question Worth Asking",question:"If patients in your panel had a hereditary cancer mutation right now — would you want to know?",subtext:"GeneID exists to make sure you can answer yes.",notes:"Read it out loud. Let it sit. Then: 'To get started, all I need is two documents signed.' Silence after the close — let them speak first."},
+];
+
+// ── COMPONENTS ──
+
+function AboutRole({setTab}) {
+  return (
+    <div style={{maxWidth:860,margin:"0 auto",padding:"32px 20px"}}>
+      <div style={{background:`linear-gradient(135deg,${NAVY} 0%,${TEAL_DARK} 100%)`,borderRadius:16,padding:"40px 44px",marginBottom:28}}>
+        <div style={{fontSize:11,fontWeight:700,letterSpacing:3,color:GOLD,textTransform:"uppercase",marginBottom:10}}>Now Hiring</div>
+        <h1 style={{fontSize:36,fontWeight:900,color:WHITE,margin:"0 0 14px",lineHeight:1.15}}>Account Manager<br/>Genetic Testing</h1>
+        <p style={{color:"rgba(255,255,255,0.75)",fontSize:15,maxWidth:520,lineHeight:1.7,margin:"0 0 24px"}}>Field-driven. Relationship-first. Built for people who love healthcare.</p>
+        <a href="mailto:careers@geneidlab.com" style={{display:"inline-block",background:GOLD,color:NAVY,fontWeight:800,fontSize:14,padding:"11px 24px",borderRadius:10,textDecoration:"none"}}>Apply Now → careers@geneidlab.com</a>
+      </div>
+      <div style={{background:"#fff8e0",border:`2px solid ${GOLD}`,borderRadius:14,padding:"22px 28px",marginBottom:22}}>
+        <div style={{fontWeight:800,color:NAVY,fontSize:17,marginBottom:12}}>🚀 What Success Looks Like</div>
+        <p style={{fontSize:14,color:"#3a3a2a",lineHeight:1.8,marginBottom:10}}>This opportunity is designed for professionals who enjoy building relationships, creating opportunities, and making a meaningful impact in healthcare. From day one, you'll have the chance to connect with medical practices, introduce valuable solutions, and grow your territory.</p>
+        <p style={{fontSize:14,color:"#3a3a2a",lineHeight:1.8,marginBottom:10}}>Our goal is for new Account Managers to <strong>secure their first account within 45 days</strong>, helping establish a strong foundation for long-term success. The people who excel in this role are naturally curious, confident in starting conversations, and comfortable engaging with everyone from office staff to physicians and healthcare leaders.</p>
+        <p style={{fontSize:14,color:"#3a3a2a",lineHeight:1.8}}>If you're driven by results, energized by meeting new people, and ready to take ownership of your success, you'll find tremendous opportunity here. 🚀</p>
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:22}}>
+        {[{icon:"🤝",title:"Relationship-Driven",desc:"This role is built on in-person presence. Showing up is what builds trust and closes accounts."},{icon:"🎯",title:"Decision-Maker Access",desc:"You'll connect with practice managers, providers, and healthcare leadership."},{icon:"📈",title:"Pipeline Ownership",desc:"Consistent outreach, strong positioning, and the ability to close open doors."},{icon:"🏃",title:"Strong Ramp Support",desc:"You'll have training, tools, and leadership support from day one."}].map((c,i)=>(
+          <div key={i} style={{background:WHITE,borderRadius:12,padding:"18px 20px",boxShadow:"0 2px 8px rgba(0,0,0,0.06)",borderLeft:`5px solid ${TEAL}`}}>
+            <div style={{fontSize:26,marginBottom:8}}>{c.icon}</div>
+            <div style={{fontWeight:800,color:NAVY,fontSize:14,marginBottom:5}}>{c.title}</div>
+            <div style={{fontSize:13,color:"#4a6a6a",lineHeight:1.6}}>{c.desc}</div>
+          </div>
+        ))}
+      </div>
+      <div style={{background:NAVY,borderRadius:12,padding:"22px 28px",textAlign:"center"}}>
+        <div style={{color:GOLD,fontWeight:800,fontSize:16,marginBottom:6}}>Ready to Apply?</div>
+        <div style={{color:"rgba(255,255,255,0.75)",fontSize:13,marginBottom:14}}>Send your resume and a brief note on your background.</div>
+        <a href="mailto:careers@geneidlab.com" style={{display:"inline-block",background:GOLD,color:NAVY,fontWeight:800,fontSize:14,padding:"10px 24px",borderRadius:10,textDecoration:"none"}}>careers@geneidlab.com</a>
+      </div>
+    </div>
+  );
+}
+
+function InterviewProcess() {
+  const [open,setOpen]=useState(1);
+  const steps=[
+    {n:"1",label:"Intro Call",color:TEAL,desc:"Initial conversation to learn about your background and interest in GeneID.",prep:["Know your background in healthcare sales","Understand GeneID's product lines at a high level","Have a clear answer for why you're interested in genetic testing sales"]},
+    {n:"2",label:"Second Interview",color:purple,desc:"This is where we evaluate your sales thinking, field approach, and ability to present.",prep:["Walk through how you would open your first account in the first 30–45 days","Bring specific examples of how you've accessed and influenced decision-makers","Be ready to discuss your activity levels, pipeline management, and closing approach","Have thoughtful questions about expectations, territory strategy, and what success looks like","Present your pitch on GeneID and our services — use the Products and Sales Training tabs to prepare","We are looking for individuals who take ownership, operate with urgency, and consistently drive results"]},
+    {n:"3",label:"Application + References",color:GOLD,desc:"Complete the employee application and provide 2 positive reference checks.",prep:["Complete employee application","2 positive professional reference checks required","References should speak to your field performance and ability to close"]},
+    {n:"4",label:"Final Interview — Jessica Subirats, RVP of Sales",color:orange,desc:"A direct conversation focused on your ability to generate opportunities, navigate healthcare organizations, and close business within a 45-day ramp.",prep:["Be specific about how you plan to generate your first opportunity","Demonstrate your understanding of how to navigate healthcare organizations","Articulate what a 45-day ramp looks like in practice — activities, targets, milestones","Know GeneID's products, account models, and competitive positioning"]},
+  ];
+  return (
+    <div style={{maxWidth:860,margin:"0 auto",padding:"32px 20px"}}>
+      <div style={{background:`linear-gradient(135deg,${NAVY} 0%,#1a3a50 100%)`,borderRadius:14,padding:"28px 34px",marginBottom:24}}>
+        <h1 style={{fontSize:28,fontWeight:900,color:WHITE,margin:"0 0 6px"}}>Interview Process</h1>
+        <p style={{color:"rgba(255,255,255,0.7)",fontSize:13,margin:0}}>4 stages. Use this hub to prepare — everything you need is here.</p>
+      </div>
+      <div style={{background:"#fff8e0",border:`2px solid ${GOLD}`,borderRadius:12,padding:"14px 20px",marginBottom:22}}>
+        <div style={{fontWeight:700,color:"#7a5500",fontSize:13}}>💡 Candidate Tip</div>
+        <div style={{fontSize:13,color:"#5a4000",marginTop:4,lineHeight:1.7}}>Use every section of this hub to prepare — especially Products, Sales Training, Meeting Deck, and Objection Handler. The second interview includes a pitch on GeneID services. Come ready to deliver it.</div>
+      </div>
+      {steps.map((step,i)=>(
+        <div key={i} style={{background:WHITE,borderRadius:12,marginBottom:12,overflow:"hidden",boxShadow:"0 2px 8px rgba(0,0,0,0.07)"}}>
+          <div onClick={()=>setOpen(open===i?null:i)} style={{padding:"16px 20px",borderLeft:`6px solid ${step.color}`,cursor:"pointer",display:"flex",alignItems:"center",gap:14}}>
+            <div style={{width:38,height:38,borderRadius:"50%",background:step.color,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+              <span style={{color:WHITE,fontWeight:900,fontSize:16}}>{step.n}</span>
+            </div>
+            <div style={{flex:1}}>
+              <div style={{fontWeight:800,color:NAVY,fontSize:14}}>{step.label}</div>
+              <div style={{fontSize:12,color:"#7a9a9a",marginTop:2}}>{step.desc}</div>
+            </div>
+            <span style={{color:step.color,fontSize:16}}>{open===i?"▲":"▼"}</span>
+          </div>
+          {open===i&&(
+            <div style={{padding:"14px 20px 18px",borderTop:"1px solid #f0f4f3"}}>
+              <div style={{fontWeight:700,color:NAVY,fontSize:12,marginBottom:8,textTransform:"uppercase",letterSpacing:1}}>How to Prepare</div>
+              {step.prep.map((pt,j)=>(
+                <div key={j} style={{display:"flex",gap:8,marginBottom:8,fontSize:13,color:"#2c4040",alignItems:"flex-start"}}>
+                  <span style={{color:step.color,fontWeight:700,flexShrink:0}}>→</span>{pt}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      ))}
+      <div style={{background:NAVY,borderRadius:12,padding:"20px 26px",textAlign:"center",marginTop:8}}>
+        <div style={{color:GOLD,fontWeight:800,fontSize:15,marginBottom:6}}>Ready to get started?</div>
+        <div style={{color:"rgba(255,255,255,0.7)",fontSize:13,marginBottom:12}}>Send your resume and a brief note on your background:</div>
+        <a href="mailto:careers@geneidlab.com" style={{display:"inline-block",background:GOLD,color:NAVY,fontWeight:800,fontSize:13,padding:"10px 22px",borderRadius:10,textDecoration:"none"}}>careers@geneidlab.com</a>
+      </div>
+    </div>
+  );
+}
+
+function Products() {
+  const [expanded,setExpanded]=useState(null);
+  const [copied,setCopied]=useState(null);
+  const copy=(text,id)=>{navigator.clipboard&&navigator.clipboard.writeText(text);setCopied(id);setTimeout(()=>setCopied(null),2000);};
+  return (
+    <div style={{maxWidth:860,margin:"0 auto",padding:"32px 20px"}}>
+      <h2 style={{color:NAVY,marginBottom:4}}>Products & Pitch Guides</h2>
+      <p style={{color:"#5a7a7a",fontSize:13,marginBottom:18}}>GeneID offers 5 genetic testing product lines. Learn each one — you'll need to pitch them in your interview.</p>
+      {products.map((p,i)=>(
+        <div key={i} style={{background:WHITE,borderRadius:12,marginBottom:12,overflow:"hidden",boxShadow:"0 2px 8px rgba(0,0,0,0.07)"}}>
+          <div onClick={()=>setExpanded(expanded===i?null:i)} style={{padding:"14px 18px",borderLeft:`6px solid ${p.color}`,cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+            <div><span style={{fontSize:20}}>{p.icon}</span><span style={{fontWeight:800,fontSize:15,color:p.color,marginLeft:10}}>{p.name}</span><span style={{color:"#777",fontSize:12,marginLeft:8}}>{p.subtitle}</span></div>
+            <span style={{color:p.color,fontSize:16}}>{expanded===i?"▲":"▼"}</span>
+          </div>
+          {expanded===i&&(
+            <div style={{padding:"0 18px 18px"}}>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginTop:12}}>
+                <div style={{background:"#f8f9fa",borderRadius:8,padding:12}}><div style={{fontWeight:700,color:p.color,marginBottom:5,fontSize:12}}>👥 WHO TO REFER</div><div style={{fontSize:12,color:"#444",lineHeight:1.5}}>{p.who}</div></div>
+                <div style={{background:"#f8f9fa",borderRadius:8,padding:12}}><div style={{fontWeight:700,color:p.color,marginBottom:5,fontSize:12}}>🔬 WHAT IT DOES</div><div style={{fontSize:12,color:"#444",lineHeight:1.5}}>{p.what}</div></div>
+              </div>
+              <div style={{background:"#f8f9fa",borderRadius:8,padding:12,marginTop:10}}><div style={{fontWeight:700,color:p.color,marginBottom:4,fontSize:12}}>💡 WHY IT MATTERS</div><div style={{fontSize:12,color:"#444",lineHeight:1.5}}>{p.why}</div></div>
+              <div style={{display:"flex",flexWrap:"wrap",gap:6,marginTop:10}}>
+                {p.stats.map((s,j)=><span key={j} style={{background:TEAL_LIGHT,color:TEAL_DARK,fontSize:11,fontWeight:600,padding:"4px 10px",borderRadius:6}}>• {s}</span>)}
+              </div>
+              <div style={{marginTop:12,background:"#fffbf0",border:`1px solid ${GOLD}`,borderRadius:10,padding:14}}>
+                <div style={{fontWeight:700,color:GOLD,marginBottom:6,fontSize:12}}>🎯 30-SECOND PITCH</div>
+                <div style={{fontSize:12,color:"#444",lineHeight:1.6,fontStyle:"italic"}}>"{p.pitch}"</div>
+                <button onClick={()=>copy(p.pitch,i)} style={{marginTop:10,background:GOLD,color:WHITE,border:"none",borderRadius:6,padding:"5px 12px",fontSize:11,fontWeight:700}}>{copied===i?"✓ Copied!":"📋 Copy Pitch"}</button>
+              </div>
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function Accounts() {
+  const [active,setActive]=useState(0);
+  const m=accountModels[active];
+  return (
+    <div style={{maxWidth:860,margin:"0 auto",padding:"32px 20px"}}>
+      <h2 style={{color:NAVY,marginBottom:4}}>Account Models</h2>
+      <p style={{color:"#5a7a7a",fontSize:13,marginBottom:18}}>Three ways for a practice to partner with GeneID. Understand each model.</p>
+      <div style={{display:"flex",gap:8,marginBottom:20,flexWrap:"wrap"}}>
+        {accountModels.map((a,i)=>(
+          <button key={i} onClick={()=>setActive(i)} style={{padding:"9px 16px",borderRadius:10,border:`2px solid ${active===i?a.color:"#d0e8e3"}`,background:active===i?a.color:WHITE,color:active===i?WHITE:NAVY,fontWeight:700,fontSize:13}}>{a.icon} {a.title}</button>
+        ))}
+      </div>
+      <div style={{background:`linear-gradient(135deg,${NAVY} 0%,${m.color}cc 100%)`,borderRadius:14,padding:"22px 28px",marginBottom:18}}>
+        <div style={{fontSize:30}}>{m.icon}</div>
+        <div style={{color:WHITE,fontWeight:900,fontSize:20,marginTop:8}}>{m.title}</div>
+        <div style={{color:"rgba(255,255,255,0.75)",fontSize:13,marginTop:4}}>{m.subtitle}</div>
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:14}}>
+        <div style={{background:WHITE,borderRadius:12,padding:18,boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}}>
+          <div style={{fontWeight:800,color:NAVY,marginBottom:8,fontSize:14}}>Overview</div>
+          <div style={{fontSize:13,color:"#2c4040",lineHeight:1.7}}>{m.overview}</div>
+        </div>
+        <div style={{background:WHITE,borderRadius:12,padding:18,boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}}>
+          <div style={{fontWeight:800,color:NAVY,marginBottom:8,fontSize:14}}>Best For</div>
+          <div style={{fontSize:13,color:"#2c4040",lineHeight:1.7}}>{m.whoFor}</div>
+        </div>
+      </div>
+      <div style={{background:WHITE,borderRadius:12,padding:18,boxShadow:"0 2px 8px rgba(0,0,0,0.06)",marginBottom:14}}>
+        <div style={{fontWeight:800,color:NAVY,marginBottom:12,fontSize:14}}>How It Works</div>
+        {m.steps.map((step,i)=>(
+          <div key={i} style={{display:"flex",gap:12,marginBottom:10,alignItems:"flex-start"}}>
+            <div style={{width:26,height:26,borderRadius:"50%",background:m.color,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+              <span style={{color:WHITE,fontWeight:900,fontSize:12}}>{i+1}</span>
+            </div>
+            <div style={{fontSize:13,color:"#333",lineHeight:1.6,paddingTop:4}}>{step}</div>
+          </div>
+        ))}
+      </div>
+      <div style={{background:`${m.color}15`,border:`2px solid ${m.color}40`,borderRadius:12,padding:16}}>
+        <div style={{fontWeight:700,color:m.color,marginBottom:5,fontSize:13}}>🏆 Closed Won Definition</div>
+        <div style={{fontSize:13,color:"#2c4040",lineHeight:1.6}}>{m.closedWon}</div>
+      </div>
+    </div>
+  );
+}
+
+function SalesTools() {
+  const [open,setOpen]=useState(null);
+  return (
+    <div style={{maxWidth:860,margin:"0 auto",padding:"32px 20px"}}>
+      <h2 style={{color:NAVY,marginBottom:4}}>Sales Tools & Training Summaries</h2>
+      <p style={{color:"#5a7a7a",fontSize:13,marginBottom:18}}>Key facts and talking points for each product and the billing process.</p>
+      {trainingSummaries.map((s,i)=>(
+        <div key={i} style={{background:WHITE,borderRadius:12,marginBottom:10,overflow:"hidden",boxShadow:"0 2px 8px rgba(0,0,0,0.07)"}}>
+          <div onClick={()=>setOpen(open===i?null:i)} style={{padding:"13px 18px",borderLeft:`6px solid ${s.color}`,cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+            <div style={{fontWeight:700,fontSize:14,color:s.color}}>{s.title}</div>
+            <span style={{color:s.color,fontSize:16}}>{open===i?"▲":"▼"}</span>
+          </div>
+          {open===i&&(
+            <div style={{padding:"12px 18px 16px"}}>
+              {s.points.map((pt,j)=>(
+                <div key={j} style={{display:"flex",gap:8,marginBottom:8,alignItems:"flex-start"}}>
+                  <span style={{color:s.color,fontWeight:700,minWidth:14,fontSize:13}}>✓</span>
+                  <span style={{fontSize:13,color:"#444",lineHeight:1.5}}>{pt}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      ))}
+      <div style={{background:WHITE,borderRadius:12,padding:18,boxShadow:"0 2px 8px rgba(0,0,0,0.07)",marginTop:6}}>
+        <div style={{fontWeight:700,color:NAVY,fontSize:14,marginBottom:10}}>🏆 Rep Mindset for the Field</div>
+        {["You are NOT selling a test. You are helping providers identify patients at risk — before symptoms appear.","The majority of your interactions need to be in person. Showing up is what builds trust.","Always leave with a follow-up scheduled. Never leave without a next step.","The GTS goes between the MA and provider — that gap already exists. You're not adding time.","Lead with stats, not products. Docs respond to data about their patients.","The close: 'To get started, all I need is the new account paperwork signed — BAA and enrollment form.'","GINA Act protects patients — genetic results CANNOT affect their health insurance."].map((rule,i)=>(
+          <div key={i} style={{display:"flex",gap:8,marginBottom:9,padding:"9px 11px",background:i%2===0?"#f8f9fa":WHITE,borderRadius:6}}>
+            <span style={{color:TEAL,fontWeight:700}}>→</span>
+            <span style={{fontSize:13,color:"#333"}}>{rule}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function Handbook() {
+  const [open,setOpen]=useState(null);
+  const commissionRows=[
+    ["1–2 Accounts","New Account","$1,260","$1,575","$1,000"],
+    ["","Monthly Maintenance","$750","$937","$750"],
+    ["","Quality Control","$250","$313","$250"],
+    ["","Yearly Maintenance","$1,000","$1,250","N/A"],
+    ["3–4 Accounts","New Account","$1,260","$1,575","$1,000"],
+    ["","Monthly Maintenance","$958","$1,198","$958"],
+    ["","Quality Control","$320","$400","$320"],
+    ["","Yearly Maintenance","$2,000","$2,500","N/A"],
+    ["5–6 Accounts","New Account","$1,260","$1,575","$1,000"],
+    ["","Monthly Maintenance","$1,000","$1,250","$1,000"],
+    ["","Quality Control","$380","$475","$380"],
+    ["","Yearly Maintenance","$4,500","$5,625","N/A"],
+    ["7+ Accounts","New Account","$1,260","$1,575","$1,000"],
+    ["","Monthly Maintenance","$1,020","$1,275","$1,020"],
+    ["","Quality Control","$450","$563","$450"],
+    ["","Yearly Maintenance","$6,300","$7,875","N/A"],
+  ];
+  const sections=[
+    {id:"comp",icon:"💰",title:"Compensation & Allowances",color:TEAL,content:[["Base Salary","$75,000 / year"],["Monthly Allowance","$725 / month (car + phone combined)"],["Expense Reimbursement","$1,000 / month base + $200 per active account per month"],["Payroll","Every 2 weeks on Wednesday"]]},
+    {id:"commission",icon:"📈",title:"Commission Overview",color:green},
+    {id:"benefits",icon:"🏥",title:"Benefits & Time Off",color:"#2980b9",content:[["Health Insurance","Eligible 1st of the month after 60 days"],["Dental & Vision","Optional — available at enrollment"],["PTO","Begins 6 months after start. 10 days at 2 viable accounts; 15 days at 3+"],["Federal Holidays","Memorial Day, Labor Day, Thanksgiving, Christmas, New Year's, Independence Day"]]},
+    {id:"expect",icon:"🎯",title:"Core Expectations",color:purple,body:"• Open your first account within 45 days\n• Visit each active account at least once a month\n• Maintain direct relationships with practice contacts\n• Complete the monthly Account Performance form for every active account\n• During onboarding, manage time efficiently to maintain accounts AND prospect new ones\n• Non-compete: 2 years post-separation for competing products"},
+  ];
+  return (
+    <div style={{maxWidth:860,margin:"0 auto",padding:"32px 20px"}}>
+      <h2 style={{color:NAVY,marginBottom:4}}>Rep Handbook</h2>
+      <p style={{color:"#5a7a7a",fontSize:13,marginBottom:18}}>Compensation, commission, benefits, and expectations.</p>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(160px,1fr))",gap:10,marginBottom:20}}>
+        {[["$75K","Starting Base Salary"],["$725/mo","Car + Phone Allowance"],["$1K+/mo","Expense Reimbursement"],["45 days","First Account Target"],["$750/mo","Insights Commission/Acct"]].map(([val,label])=>(
+          <div key={label} style={{background:TEAL_LIGHT,borderRadius:10,padding:"12px 14px",textAlign:"center"}}>
+            <div style={{fontWeight:900,color:TEAL_DARK,fontSize:20}}>{val}</div>
+            <div style={{fontSize:11,color:"#444",marginTop:2}}>{label}</div>
+          </div>
+        ))}
+      </div>
+      {sections.map((sec)=>(
+        <div key={sec.id} style={{background:WHITE,borderRadius:12,marginBottom:10,overflow:"hidden",boxShadow:"0 2px 8px rgba(0,0,0,0.07)"}}>
+          <div onClick={()=>setOpen(open===sec.id?null:sec.id)} style={{padding:"13px 18px",borderLeft:`6px solid ${sec.color}`,cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+            <div style={{fontWeight:700,fontSize:14,color:sec.color}}>{sec.icon} {sec.title}</div>
+            <span style={{color:sec.color,fontSize:16}}>{open===sec.id?"▲":"▼"}</span>
+          </div>
+          {open===sec.id&&(
+            <div style={{padding:"14px 18px 18px"}}>
+              {sec.id==="commission"?(
+                <div>
+                  <p style={{fontSize:13,color:"#444",marginBottom:12}}>Four components. Reaching a higher tier upgrades <strong>all</strong> accounts to the higher rate.</p>
+                  {[["New Account","Paid ONE TIME in the first calendar month an account is fully active"],["Monthly Maintenance","Paid monthly when an account is active for the full calendar month"],["Quality Control (QC)","Paid monthly based on test quality and account management standards"],["Yearly Maintenance","Paid annually after 12 consecutive qualifying months"]].map(([comp,desc])=>(
+                    <div key={comp} style={{display:"flex",gap:8,marginBottom:7,fontSize:13}}>
+                      <span style={{color:green,fontWeight:700,flexShrink:0}}>✓</span>
+                      <span><strong>{comp}</strong> — {desc}</span>
+                    </div>
+                  ))}
+                  <div style={{fontWeight:700,color:NAVY,margin:"14px 0 8px",fontSize:13}}>GTS Commission Rate Table</div>
+                  <div style={{overflowX:"auto"}}>
+                    <table style={{fontSize:11}}>
+                      <thead>
+                        <tr style={{background:NAVY}}>
+                          {["Tier","Component","PCP / Other*","OBGYN","PGx-Only"].map(h=>(
+                            <th key={h} style={{padding:"8px 10px",color:WHITE,fontWeight:700,textAlign:"center",border:"1px solid rgba(255,255,255,0.1)"}}>{h}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {commissionRows.map((row,i)=>(
+                          <tr key={i} style={{background:i%8<4?WHITE:"#f0f7f7",borderBottom:"1px solid #e0e0e0"}}>
+                            {row.map((cell,j)=>(
+                              <td key={j} style={{padding:"7px 10px",textAlign:"center",fontWeight:j===0&&cell?700:400,color:j===0&&cell?NAVY:"#333",background:j===0&&cell?TEAL_LIGHT:undefined,border:"1px solid #e0e8e3"}}>{cell}</td>
+                            ))}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  <div style={{fontSize:11,color:"#777",marginTop:5,fontStyle:"italic"}}>*PCP/Other includes: Urology, GYN-only, Internal Medicine, and all non-OBGYN practices.</div>
+                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginTop:14}}>
+                    <div style={{background:TEAL_LIGHT,borderRadius:10,padding:"14px 16px",border:`2px solid ${TEAL}30`}}>
+                      <div style={{fontWeight:800,color:TEAL_DARK,fontSize:14,marginBottom:4}}>🤖 GeneID Insights</div>
+                      <div style={{fontSize:13,color:"#333"}}><strong>$750 / month</strong> per active account</div>
+                    </div>
+                    <div style={{background:"#fff8e0",borderRadius:10,padding:"14px 16px",border:`2px solid ${GOLD}30`}}>
+                      <div style={{fontWeight:800,color:"#a07000",fontSize:14,marginBottom:4}}>📦 Self-Referral</div>
+                      <div style={{fontSize:13,color:"#333",lineHeight:1.6}}><strong>$500 / month</strong> (5+ completed tests/month required)<br/><br/><strong>$1,500 bonus</strong> on 5th actively referring account</div>
+                    </div>
+                  </div>
+                  <div style={{background:TEAL_LIGHT,borderRadius:10,padding:12,marginTop:12}}>
+                    <div style={{fontWeight:700,color:NAVY,marginBottom:6,fontSize:13}}>📊 Example — 2 PCP + 2 OBGYN (Tier: 3–4)</div>
+                    <div style={{fontSize:13,color:"#333"}}>PCP Maintenance: $958×2 = $1,916 | PCP QC: $320×2 = $640</div>
+                    <div style={{fontSize:13,color:"#333",marginTop:3}}>OBGYN Maintenance: $1,198×2 = $2,396 | OBGYN QC: $400×2 = $800</div>
+                    <div style={{fontWeight:900,fontSize:17,color:TEAL_DARK,marginTop:8}}>Monthly GTS Total = $5,752</div>
+                  </div>
+                </div>
+              ):sec.content?(
+                sec.content.map(([l,v])=>(
+                  <div key={l} style={{display:"grid",gridTemplateColumns:"190px 1fr",marginBottom:7}}>
+                    <div style={{background:NAVY,color:WHITE,fontWeight:700,fontSize:11,padding:"7px 11px",borderRadius:"6px 0 0 6px"}}>{l}</div>
+                    <div style={{background:"#f0f0f0",fontSize:12,padding:"7px 11px",borderRadius:"0 6px 6px 0"}}>{v}</div>
+                  </div>
+                ))
+              ):(
+                <div style={{fontSize:13,color:"#333",lineHeight:1.8,whiteSpace:"pre-line"}}>{sec.body}</div>
+              )}
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function KPIs() {
+  return (
+    <div style={{maxWidth:860,margin:"0 auto",padding:"32px 20px"}}>
+      <h2 style={{color:NAVY,marginBottom:4}}>KPIs & Account Management Expectations</h2>
+      <p style={{color:"#5a7a7a",fontSize:13,marginBottom:18}}>What success looks like — by the numbers and in the field.</p>
+      <div style={{background:`linear-gradient(135deg,${NAVY} 0%,${TEAL_DARK} 100%)`,borderRadius:14,padding:"20px 26px",marginBottom:20}}>
+        <div style={{color:GOLD,fontWeight:800,fontSize:15,marginBottom:12}}>Activity Targets</div>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(160px,1fr))",gap:10}}>
+          {[["20–25","In-person visits / week"],["120–150","Outreach touches / 45 days"],["25–35","Conversations / 45 days"],["10–15","Demos / 45 days"],["1–2","Accounts closed / 45 days"],["< 45 days","Target ramp: first account"]].map(([val,label])=>(
+            <div key={label} style={{background:"rgba(255,255,255,0.1)",borderRadius:10,padding:"12px 14px",textAlign:"center"}}>
+              <div style={{color:GOLD,fontWeight:900,fontSize:22}}>{val}</div>
+              <div style={{color:"rgba(255,255,255,0.75)",fontSize:11,marginTop:3}}>{label}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:18}}>
+        {[["Outreach → Demo","15–25%"],["Demo → Proposal","50–60%"],["Proposal → Close","60–70%"],["Test Approval Rate","60%+ target"]].map(([label,val])=>(
+          <div key={label} style={{background:WHITE,borderRadius:12,padding:"16px 18px",boxShadow:"0 2px 8px rgba(0,0,0,0.06)",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+            <div style={{fontWeight:700,color:NAVY,fontSize:13}}>{label}</div>
+            <div style={{fontWeight:900,color:TEAL,fontSize:20}}>{val}</div>
+          </div>
+        ))}
+      </div>
+      <div style={{background:WHITE,borderRadius:12,padding:"18px 22px",boxShadow:"0 2px 8px rgba(0,0,0,0.06)",marginBottom:14}}>
+        <div style={{fontWeight:800,color:NAVY,fontSize:14,marginBottom:10}}>Account Management Standards</div>
+        {["Visit each active account at least once a month — minimum, not a target","Maintain direct communication with key contacts: office manager, lead provider, or MA","Do NOT rely on the GTS to manage the practice relationship on your behalf","Complete the monthly Account Performance form for every active account","During onboarding, manage time efficiently to prospect AND maintain existing accounts"].map((item,i)=>(
+          <div key={i} style={{display:"flex",gap:8,marginBottom:9,padding:"9px 11px",background:i%2===0?LG:WHITE,borderRadius:6}}>
+            <span style={{color:TEAL}}>→</span><span style={{fontSize:13,color:"#2c4040"}}>{item}</span>
+          </div>
+        ))}
+      </div>
+      <div style={{background:WHITE,borderRadius:12,padding:"18px 22px",boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}}>
+        <div style={{fontWeight:800,color:NAVY,fontSize:14,marginBottom:10}}>GTS Screening Day Requirements (per 21-day month)</div>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:10}}>
+          {[["20–21 days","0–1 missed","100%","#2d7a4f","#d5f0d5"],["19 days","2 missed","75%","#C9963A","#fff8e0"],["17 days","3–4 missed","50%","#C05000","#ffe8d0"],["< 17 days","5+ missed","0%","#AA0000","#ffe0e0"]].map(([days,missed,pct,tc,bg])=>(
+            <div key={days} style={{background:bg,borderRadius:8,padding:"12px 10px",textAlign:"center"}}>
+              <div style={{fontWeight:900,fontSize:24,color:tc}}>{pct}</div>
+              <div style={{fontSize:11,fontWeight:700,color:"#333",marginTop:5}}>{days}</div>
+              <div style={{fontSize:10,color:"#666"}}>{missed}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ObjectionHandler() {
+  const [open,setOpen]=useState(null);
+  const tagColors={Competitor:"#e74c3c",Cost:"#e67e22",Workflow:TEAL,Criteria:NAVY,Legal:"#7f8c8d","Past Exp.":"#c0392b",Results:"#8e44ad",Value:GOLD};
+  return (
+    <div style={{maxWidth:800,margin:"0 auto",padding:"32px 20px"}}>
+      <h2 style={{color:NAVY,marginBottom:4}}>Provider Objection Handler</h2>
+      <p style={{color:"#5a7a7a",fontSize:13,marginBottom:14}}>The 8 most common provider objections. Prepare these for your interview.</p>
+      <div style={{background:TEAL,borderRadius:10,padding:"12px 18px",marginBottom:20,display:"flex",gap:14,flexWrap:"wrap"}}>
+        {["Never trash competitors","Lead with empathy","Always close with a next step"].map(r=>(
+          <span key={r} style={{color:WHITE,fontSize:13,fontWeight:600,display:"flex",alignItems:"center",gap:6}}><span style={{color:GOLD}}>✓</span> {r}</span>
+        ))}
+      </div>
+      {objections.map((o,i)=>(
+        <div key={i} onClick={()=>setOpen(open===i?null:i)} style={{borderRadius:10,border:`2px solid ${open===i?TEAL:"#d4e8e4"}`,marginBottom:9,overflow:"hidden",cursor:"pointer",background:open===i?TEAL_LIGHT:WHITE}}>
+          <div style={{padding:"12px 16px",display:"flex",alignItems:"center",gap:10}}>
+            <span style={{background:tagColors[o.tag]||TEAL,color:WHITE,fontSize:10,fontWeight:700,padding:"2px 8px",borderRadius:16,whiteSpace:"nowrap"}}>{o.tag}</span>
+            <span style={{fontSize:13,fontWeight:700,color:NAVY,flex:1}}>{o.q}</span>
+            <span style={{color:TEAL,fontSize:14}}>{open===i?"▲":"▼"}</span>
+          </div>
+          {open===i&&(
+            <div style={{padding:"0 16px 14px",borderTop:"1px solid #c8e2dc"}}>
+              <div style={{marginTop:10,fontSize:13,color:"#2c4040",lineHeight:1.7}}>{o.a}</div>
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function WhyGeneID() {
+  const points=[
+    {icon:"✅",title:"Verification-First Approach",desc:"We never run a test without insurance approval. All prior authorizations handled by our team — patients are never surprised by a bill."},
+    {icon:"🏥",title:"Turnkey In-Office Program",desc:"Certified GTS comes to your office. Our team screens, collects, and documents — minimizing practice disruption."},
+    {icon:"💻",title:"Proprietary Screening Software",desc:"GetGeneID has NCCN, ACOG, FDA/CPIC, and insurance-specific criteria built in — no guesswork on eligibility."},
+    {icon:"🤖",title:"AI-Powered Patient ID",desc:"GeneID Insights scans your EMR and flags eligible patients before they walk out the door."},
+    {icon:"🤝",title:"Branded Co-Marketing",desc:"Patient outreach uses the practice's name and branding — patients feel it as an extension of their care."},
+    {icon:"👨‍⚕️",title:"Medical Director Oversight",desc:"Dr. Garcia reviews all positive results. Genetic counseling coordinated for every finding."},
+    {icon:"🧬",title:"Full Test Menu",desc:"Hereditary cancer, carrier screening, PGx, NIPT, and whole exome — one partner for your entire genetic testing program."},
+    {icon:"🧪",title:"30-Second Collection",desc:"Simple Scope® mouthwash rinse — no blood draw, no pain, no lab visit required."},
+  ];
+  return (
+    <div style={{maxWidth:820,margin:"0 auto",padding:"32px 20px"}}>
+      <div style={{background:`linear-gradient(135deg,${NAVY} 0%,${TEAL_DARK} 100%)`,borderRadius:16,padding:"34px 38px",marginBottom:26}}>
+        <div style={{fontSize:11,fontWeight:700,letterSpacing:3,color:GOLD,textTransform:"uppercase",marginBottom:8}}>Candidate Reference</div>
+        <h1 style={{fontSize:30,fontWeight:900,color:WHITE,margin:0}}>Why GeneID?</h1>
+        <p style={{color:"rgba(255,255,255,0.75)",fontSize:14,marginTop:8}}>8 reasons providers partner with us — and 8 reasons you'd want to sell for us.</p>
+        <div style={{marginTop:16,display:"flex",gap:10,flexWrap:"wrap"}}>
+          {["CLIA Certified","CAP Accredited","CMS Laboratory","Founded 2012"].map(b=>(
+            <span key={b} style={{background:"rgba(255,255,255,0.12)",color:WHITE,fontSize:11,fontWeight:700,padding:"5px 12px",borderRadius:20}}>{b}</span>
+          ))}
+        </div>
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+        {points.map((p,i)=>(
+          <div key={i} style={{background:WHITE,border:"1px solid #d0e8e3",borderRadius:12,padding:"16px 18px",display:"flex",gap:12}}>
+            <div style={{fontSize:24,flexShrink:0}}>{p.icon}</div>
+            <div>
+              <div style={{fontWeight:800,color:NAVY,fontSize:13,marginBottom:4}}>{p.title}</div>
+              <div style={{color:"#4a6a6a",fontSize:12,lineHeight:1.6}}>{p.desc}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function Workflow() {
+  const steps=[
+    {n:"1",title:"Enrollment & Setup",color:TEAL,items:["New Provider Enrollment forms completed","GeneID enrolls practice in Careviso for prior authorizations","Providers added to GetGeneID for patient screening"]},
+    {n:"2",title:"Identify Eligible Patients",color:GOLD,items:["GeneID Insights generates customized patient report (optional)","Provider discusses testing with patients in visit","GTS screens patients using GetGeneID proprietary software"]},
+    {n:"3",title:"Insurance Verification",color:"#2980b9",items:["GeneID verifies insurance coverage via Careviso","All prior authorizations managed by GeneID","Test does NOT run without approval or patient consent"]},
+    {n:"4",title:"Sample Collection",color:purple,items:["Kit shipped to patient home (self-referral) or collected in-office (GTS)","Patient completes e-consent","30-second Scope® mouthwash — no blood draw"]},
+    {n:"5",title:"Lab Processing",color:TEAL_DARK,items:["Advanced NGS processing","Results reviewed by Dr. Garcia","Turnaround: 4–6 weeks"]},
+    {n:"6",title:"Results & Follow-Up",color:"#c0392b",items:["Results delivered to provider via portal","GeneID coordinates genetic counseling for positives","Medicare PGx: automatic pharmacist referral"]},
+  ];
+  return (
+    <div style={{maxWidth:820,margin:"0 auto",padding:"32px 20px"}}>
+      <h2 style={{color:NAVY,marginBottom:4}}>GeneID Referral Workflow</h2>
+      <p style={{color:"#5a7a7a",fontSize:13,marginBottom:22}}>End-to-end process — from practice enrollment to result delivery.</p>
+      <div style={{position:"relative"}}>
+        <div style={{position:"absolute",left:26,top:0,bottom:0,width:3,background:`linear-gradient(to bottom,${TEAL},${TEAL_DARK})`,borderRadius:4}}/>
+        {steps.map((s,i)=>(
+          <div key={i} style={{display:"flex",gap:18,marginBottom:16,position:"relative"}}>
+            <div style={{width:52,height:52,borderRadius:"50%",background:s.color,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,zIndex:1,border:`3px solid ${WHITE}`,boxShadow:`0 0 0 2px ${s.color}`}}>
+              <span style={{color:WHITE,fontWeight:900,fontSize:18}}>{s.n}</span>
+            </div>
+            <div style={{flex:1,background:WHITE,borderLeft:`4px solid ${s.color}`,borderRadius:"0 12px 12px 0",padding:"12px 16px",marginTop:4}}>
+              <div style={{fontWeight:800,color:NAVY,fontSize:14,marginBottom:6}}>{s.title}</div>
+              {s.items.map((item,j)=>(
+                <div key={j} style={{fontSize:12,color:"#3a5a5a",display:"flex",gap:6,marginBottom:3}}>
+                  <span style={{color:s.color,flexShrink:0}}>→</span>{item}
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function InsightsSellSheet() {
+  return (
+    <div style={{maxWidth:820,margin:"0 auto",padding:"32px 20px"}}>
+      <div style={{background:`linear-gradient(120deg,${NAVY} 0%,${TEAL_DARK} 60%,${TEAL_MID} 100%)`,borderRadius:16,padding:"34px 38px",marginBottom:22}}>
+        <div style={{fontSize:10,fontWeight:700,letterSpacing:3,color:GOLD,textTransform:"uppercase",marginBottom:8}}>AI-Powered EMR Platform</div>
+        <h1 style={{fontSize:30,fontWeight:900,color:WHITE,margin:"0 0 8px"}}>GeneID Insights</h1>
+        <p style={{color:"rgba(255,255,255,0.75)",fontSize:14,maxWidth:500,lineHeight:1.6,margin:0}}>Algorithm-driven patient identification — no IT integration required.</p>
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:12,marginBottom:16}}>
+        {[{t:"Same-Day Setup",d:"Works with any EHR. Secure login — no IT involvement.",icon:"⚡"},{t:"90-Day Trial",d:"12-month agreement, $199/mo after. 30-day cancellation policy.",icon:"📋"},{t:"Co-Marketing Included",d:"Patient outreach uses the practice's name and branding.",icon:"🤝"}].map(b=>(
+          <div key={b.t} style={{background:NAVY,borderRadius:12,padding:16,textAlign:"center"}}>
+            <div style={{fontSize:24,marginBottom:6}}>{b.icon}</div>
+            <div style={{color:GOLD,fontWeight:800,fontSize:12,marginBottom:4}}>{b.t}</div>
+            <div style={{color:"rgba(255,255,255,0.7)",fontSize:11,lineHeight:1.5}}>{b.d}</div>
+          </div>
+        ))}
+      </div>
+      <div style={{background:WHITE,borderRadius:12,padding:18,boxShadow:"0 2px 8px rgba(0,0,0,0.06)",marginBottom:14}}>
+        <div style={{fontWeight:700,color:NAVY,fontSize:13,marginBottom:8}}>How It Works</div>
+        {["GeneID gains secure EMR access from the practice","Algorithm scans records against NCCN, ACOG, FDA & CPIC criteria","Patient report reviewed by provider before outreach begins","Outreach team contacts patients using the practice's branding","Insurance verified before every test"].map((pt,i)=>(
+          <div key={i} style={{display:"flex",gap:8,marginBottom:7,fontSize:13,color:"#333"}}><span style={{color:TEAL}}>✓</span>{pt}</div>
+        ))}
+      </div>
+      <div style={{background:NAVY,borderRadius:12,padding:"16px 20px"}}>
+        <div style={{fontWeight:700,color:GOLD,fontSize:13,marginBottom:8}}>Real Numbers from a Trial</div>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:10}}>
+          {[["14,113","patients scanned"],["6,846","PGx-eligible"],["5,866","carrier-eligible"],["322","cancer-risk eligible"]].map(([val,label])=>(
+            <div key={label} style={{background:"rgba(255,255,255,0.08)",borderRadius:8,padding:"10px 8px",textAlign:"center"}}>
+              <div style={{color:GOLD,fontWeight:900,fontSize:20}}>{val}</div>
+              <div style={{color:"rgba(255,255,255,0.7)",fontSize:10,marginTop:2}}>{label}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CompetitorAnalysis() {
+  const Cell=({val})=>{
+    if(val===true)return <span style={{color:TEAL,fontWeight:800,fontSize:15}}>✓</span>;
+    if(val===false)return <span style={{color:"#ccc",fontSize:15}}>—</span>;
+    return <span style={{color:GOLD,fontSize:10,fontWeight:700}}>{val}</span>;
+  };
+  return (
+    <div style={{maxWidth:900,margin:"0 auto",padding:"32px 20px"}}>
+      <h2 style={{color:NAVY,marginBottom:4}}>Competitor Analysis</h2>
+      <p style={{color:"#5a7a7a",fontSize:13,marginBottom:18}}>Know your competitive positioning. Be ready to discuss this in your interview.</p>
+      <div style={{overflowX:"auto",marginBottom:22}}>
+        <table style={{fontSize:12}}>
+          <thead>
+            <tr style={{background:NAVY}}>
+              <th style={{padding:"11px 14px",color:WHITE,fontWeight:700,textAlign:"left",minWidth:200}}>Feature</th>
+              {[["GeneID",TEAL],["Natera","#e67e22"],["Myriad","#8e44ad"],["Ambry","#2980b9"]].map(([name])=>(
+                <th key={name} style={{padding:"11px 14px",color:name==="GeneID"?GOLD:WHITE,fontWeight:800,textAlign:"center",borderLeft:name==="GeneID"?`3px solid ${GOLD}`:undefined,minWidth:90}}>{name==="GeneID"&&"★ "}{name}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {criteria.map((c,i)=>(
+              <tr key={i} style={{background:i%2===0?WHITE:LG,borderBottom:"1px solid #e8f0ee"}}>
+                <td style={{padding:"9px 14px",color:NAVY,fontWeight:600}}>{c.label}</td>
+                {["geneid","natera","myriad","ambry"].map(k=>(
+                  <td key={k} style={{padding:"9px 14px",textAlign:"center",background:k==="geneid"?TEAL_LIGHT:undefined,borderLeft:k==="geneid"?`3px solid ${TEAL}`:undefined}}>
+                    <Cell val={c[k]}/>
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      {[{comp:"Natera",color:"#e67e22",note:"Strong in NIPT and carrier screening. GeneID differentiates with PGx, our verification-first billing model, and in-office GTS placement. Natera has documented surprise billing complaints — our policy of never running a test without insurance approval is a meaningful contrast."},{comp:"Myriad",color:"#8e44ad",note:"Covers hereditary cancer and carrier; GeneSight handles PGx. Focus on our in-office GTS model, full-service support, verification-first billing, and broader test menu including NIPT and WES."},{comp:"Ambry",color:"#2980b9",note:"Respected across hereditary cancer, carrier, and PGx. Position GeneID as the full-spectrum partner with an in-office specialist, proprietary screening software, and co-marketing — an operational model Ambry doesn't replicate."}].map(c=>(
+        <div key={c.comp} style={{background:WHITE,border:`2px solid ${c.color}20`,borderTop:`4px solid ${c.color}`,borderRadius:12,padding:"16px 20px",marginBottom:12}}>
+          <div style={{fontWeight:800,color:NAVY,fontSize:15,marginBottom:6}}>vs. {c.comp}</div>
+          <div style={{fontSize:13,color:"#2c4040",lineHeight:1.7}}>{c.note}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function Training() {
+  const [activeModule,setActiveModule]=useState(0);
+  const modules=[
+    {title:"Module 1: Foundation",icon:"🧬",sections:[
+      {heading:"Company Overview",content:"GeneID was founded in 2012 and is headquartered at 136 Summit Ave, Montvale, NJ. CLIA-certified, CAP-accredited, CMS-recognized.\n\nDr. Garcia is our Medical Director — the primary clinical contact for all results and provider questions. Dr. Cohen is double board-certified in OB/GYN and Medical Genetics and led the Argentinian BRCA research for the Human Genome Project."},
+      {heading:"Genetics for Reps",content:"DNA is the instruction manual inside every cell. Genes are sections of that manual. When a gene has a mutation, the instruction may be incorrect — which can increase disease risk or affect how medications are processed.\n\nNext Generation Sequencing (NGS) scans thousands of genes simultaneously to identify variants that may be clinically significant.\n\nSimple analogy: 'Think of it like spell-check for your DNA. NGS scans the entire document and flags any errors that might cause problems down the line.'"},
+      {heading:"The 5 Test Lines",content:"PrevenTest™ — Hereditary Cancer: 8 cancer types, 36+ genes. ACA mandates BRCA1/2 at $0 cost-sharing for qualifying patients.\n\nNewbornGeneID™ — Carrier Screening: 68+ conditions. ACOG recommends for ALL reproductive-age patients.\n\nPharmacogenomics — PGx: 4 panels. FDA/CPIC guidelines. ADRs are 4th leading cause of death.\n\nEnvisage GeneID™ — NIPT: From 10 weeks. Down syndrome + sex chromosomes + microdeletions + gender.\n\nXenome™ — Whole Exome: ~20,000 genes. Primary focus: pediatric autism and epilepsy."},
+    ]},
+    {title:"Module 2: Sales Process",icon:"🎯",sections:[
+      {heading:"Ideal Customer Profile",content:"Primary targets: Family Practice / Internal Medicine (high panel volume), OB/GYN (carrier + NIPT), Oncology (hereditary cancer), Cardiology (PGx).\n\nPractice viability: Minimum 20 patients/day; 30+ preferred. Strong BCBS mix preferred. All states except TX: PPO patients only."},
+      {heading:"The GENE Discovery Framework",content:"G — Gaps: 'What does your current genetic testing workflow look like?'\n\nE — Education: 'When did you last discuss the NCCN/ACOG updates on population-level testing?'\n\nN — Numbers: 'How many patients do you see per week?'\n\nE — Existing: 'Are you currently working with any genetic testing lab?'\n\nGoal: Identify one pain point to lead with in the demo."},
+      {heading:"The Close",content:"Assumptive: 'The next step is simple — two documents: a BAA and a New Client Form. What's the best email for DocuSign?'\n\nTimeline: 'If we start the paperwork this week, our team can be in your office within 5–7 business days.'\n\nRisk-Reversal: 'No contract, no exclusivity, no cost to your practice. All we need is a BAA and enrollment form.'\n\nAfter the close: silence. Let them speak first."},
+    ]},
+    {title:"Module 3: Insurance",icon:"💳",sections:[
+      {heading:"How Insurance Works at GeneID",content:"GeneID never runs a test without insurance approval:\n\n1. Patient referral received\n2. Insurance verified via Careviso\n3. Prior Authorization submitted\n4. If approved: test proceeds\n5. If denied or cost-sharing applies: patient contacted for consent before test runs\n\nACA / BRCA1/2: $0 cost-sharing — no deductible, no copay, no coinsurance — for eligible patients on ACA-compliant plans.\n\nGINA Act: Genetic results cannot be used to deny or price health insurance."},
+      {heading:"Addressing Billing Objections",content:"Natera is facing a class-action lawsuit for sending unexpected bills of $800–$2,400 to patients months after testing.\n\nTalk track: 'Has your practice ever had a patient call upset about a bill from a genetic testing lab? That's why we built our program the way we did. A test literally cannot run at GeneID unless insurance has approved it or the patient has given explicit written consent.'"},
+    ]},
+    {title:"Module 4: Compliance",icon:"⚖️",sections:[
+      {heading:"Stark Law & Anti-Kickback",content:"GeneID does not offer referral fees, rebates, or compensation to providers.\n\nNever offer cash, gift cards, meals over $75, or any compensation tied to referrals.\n\nIf asked: 'GeneID doesn't pay referral fees — that would violate federal law. The value is in earlier identification and better clinical information for your patients.'"},
+      {heading:"Scope of Practice",content:"GeneID reps are not clinicians. Do NOT:\n• Interpret specific genetic results\n• Recommend specific tests for specific patients by name\n• Give clinical advice about what a result means for patient management\n\nDO:\n• Explain which patient populations are eligible based on published guidelines\n• Connect providers directly to Dr. Garcia for clinical questions\n• Use: 'Dr. Garcia is our Medical Director and can speak to that directly — let me connect you'"},
+    ]},
+  ];
+  return (
+    <div style={{maxWidth:860,margin:"0 auto",padding:"32px 20px"}}>
+      <h2 style={{color:NAVY,marginBottom:4}}>🎓 Sales Training</h2>
+      <p style={{color:"#5a7a7a",fontSize:13,marginBottom:18}}>4 modules covering product knowledge, sales process, insurance, and compliance. Essential for interview prep.</p>
+      <div style={{display:"flex",gap:8,marginBottom:20,flexWrap:"wrap"}}>
+        {modules.map((m,i)=>(
+          <button key={i} onClick={()=>setActiveModule(i)} style={{padding:"8px 14px",borderRadius:8,border:`2px solid ${activeModule===i?NAVY:"#d0e8e3"}`,background:activeModule===i?NAVY:WHITE,color:activeModule===i?WHITE:NAVY,fontWeight:700,fontSize:12}}>{m.icon} {m.title}</button>
+        ))}
+      </div>
+      {modules[activeModule].sections.map((section,si)=>(
+        <div key={si} style={{background:WHITE,border:"1px solid #d0e8e3",borderRadius:12,padding:"18px 22px",marginBottom:12}}>
+          <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10}}>
+            <div style={{background:NAVY,color:WHITE,fontWeight:800,fontSize:11,padding:"3px 10px",borderRadius:20}}>{si+1}</div>
+            <div style={{fontWeight:800,color:NAVY,fontSize:15}}>{section.heading}</div>
+          </div>
+          <div style={{fontSize:13,color:"#2c4040",lineHeight:1.85,whiteSpace:"pre-line"}}>{section.content}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function MeetingDeck() {
+  const [slide,setSlide]=useState(0);
+  const current=deckSlides[slide];
+  const renderSlide=()=>{
+    switch(current.type){
+      case"title":return(
+        <div style={{background:`linear-gradient(135deg,${NAVY} 0%,${TEAL_DARK} 100%)`,borderRadius:14,padding:"48px 44px",minHeight:340,display:"flex",flexDirection:"column",justifyContent:"center"}}>
+          <h1 style={{fontSize:36,fontWeight:900,color:WHITE,margin:"0 0 14px",lineHeight:1.15,whiteSpace:"pre-line"}}>{current.title}</h1>
+          <div style={{fontSize:16,color:"rgba(255,255,255,0.65)"}}>{current.subtitle}</div>
+          <div style={{marginTop:20,display:"flex",gap:10,flexWrap:"wrap"}}>
+            {["CLIA Certified","CAP Accredited","CMS Laboratory","Founded 2012"].map(b=>(
+              <span key={b} style={{background:"rgba(255,255,255,0.12)",color:WHITE,fontSize:11,fontWeight:700,padding:"5px 12px",borderRadius:20}}>{b}</span>
+            ))}
+          </div>
+        </div>
+      );
+      case"stat":return(
+        <div>
+          <h2 style={{fontSize:24,fontWeight:900,color:NAVY,marginBottom:18,textAlign:"center"}}>{current.title}</h2>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
+            {current.stats.map((s,i)=>(
+              <div key={i} style={{background:WHITE,borderTop:`4px solid ${s.color}`,borderRadius:12,padding:"20px 16px",textAlign:"center",boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}}>
+                <div style={{fontSize:38,fontWeight:900,color:s.color,lineHeight:1}}>{s.value}</div>
+                <div style={{fontSize:13,color:NAVY,fontWeight:600,marginTop:8,lineHeight:1.4}}>{s.label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+      case"solution":return(
+        <div>
+          <h2 style={{fontSize:22,fontWeight:900,color:NAVY,marginBottom:16,textAlign:"center"}}>{current.title}</h2>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:12}}>
+            {current.pillars.map((p,i)=>(
+              <div key={i} style={{background:WHITE,border:"1px solid #d0e8e3",borderRadius:10,padding:"14px 12px",textAlign:"center"}}>
+                <div style={{fontSize:26,marginBottom:7}}>{p.icon}</div>
+                <div style={{fontWeight:800,color:NAVY,fontSize:12,marginBottom:5}}>{p.title}</div>
+                <div style={{color:"#4a6a6a",fontSize:11,lineHeight:1.5}}>{p.desc}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+      case"proof":return(
+        <div>
+          <h2 style={{fontSize:22,fontWeight:900,color:NAVY,marginBottom:4,textAlign:"center"}}>{current.title}</h2>
+          <div style={{textAlign:"center",fontSize:14,color:TEAL_DARK,fontWeight:700,marginBottom:16}}>{current.headline}</div>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:12,marginBottom:14}}>
+            {current.metrics.map((m,i)=>(
+              <div key={i} style={{background:WHITE,borderTop:`4px solid ${m.color}`,borderRadius:10,padding:"14px 10px",textAlign:"center"}}>
+                <div style={{fontSize:36,fontWeight:900,color:m.color,lineHeight:1}}>{m.value}</div>
+                <div style={{color:NAVY,fontWeight:600,fontSize:11,marginTop:6,lineHeight:1.4}}>{m.label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+      case"close":return(
+        <div>
+          <div style={{background:`linear-gradient(135deg,${NAVY} 0%,${TEAL_DARK} 100%)`,borderRadius:14,padding:"40px 36px",textAlign:"center",marginBottom:16}}>
+            <div style={{fontSize:24,fontWeight:900,color:WHITE,lineHeight:1.35,marginBottom:10}}>{current.question}</div>
+            <div style={{fontSize:14,color:"rgba(255,255,255,0.65)"}}>{current.subtext}</div>
+          </div>
+          <div style={{display:"flex",gap:10,flexWrap:"wrap",justifyContent:"center"}}>
+            {["GeneIDLab.com","(201) 825-0186","CLIA Certified","CAP Accredited"].map(a=>(
+              <span key={a} style={{background:TEAL_LIGHT,color:TEAL_DARK,fontSize:12,fontWeight:700,padding:"6px 14px",borderRadius:20}}>{a}</span>
+            ))}
+          </div>
+        </div>
+      );
+      default:return null;
+    }
+  };
+  return (
+    <div style={{maxWidth:860,margin:"0 auto",padding:"32px 20px"}}>
+      <h2 style={{color:NAVY,marginBottom:4}}>📊 Meeting Deck</h2>
+      <p style={{color:"#5a7a7a",fontSize:13,marginBottom:16}}>Practice this deck — you'll present a version of it in your interview.</p>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+        <button onClick={()=>setSlide(Math.max(0,slide-1))} disabled={slide===0} style={{padding:"7px 16px",borderRadius:8,border:`2px solid ${slide===0?"#d0e8e3":TEAL}`,background:slide===0?LG:TEAL,color:slide===0?"#aaa":WHITE,fontWeight:700}}>← Prev</button>
+        <div style={{fontWeight:700,color:NAVY}}>Slide {slide+1} of {deckSlides.length}</div>
+        <button onClick={()=>setSlide(Math.min(deckSlides.length-1,slide+1))} disabled={slide===deckSlides.length-1} style={{padding:"7px 16px",borderRadius:8,border:`2px solid ${slide===deckSlides.length-1?"#d0e8e3":TEAL}`,background:slide===deckSlides.length-1?LG:TEAL,color:slide===deckSlides.length-1?"#aaa":WHITE,fontWeight:700}}>Next →</button>
+      </div>
+      <div style={{background:LG,borderRadius:14,padding:"26px 30px",marginBottom:12,minHeight:360,boxShadow:"0 4px 20px rgba(13,43,62,0.1)"}}>{renderSlide()}</div>
+      <div style={{background:NAVY,borderRadius:12,padding:"14px 20px"}}>
+        <div style={{color:GOLD,fontWeight:700,fontSize:10,textTransform:"uppercase",letterSpacing:1,marginBottom:5}}>🎤 Speaker Notes</div>
+        <div style={{color:"rgba(255,255,255,0.8)",fontSize:12,lineHeight:1.75,fontStyle:"italic"}}>{current.notes}</div>
+      </div>
+    </div>
+  );
+}
+
+// ── MAIN APP ──
+function App() {
+  const [activeTab,setActiveTab]=useState("about");
+  const renderContent=()=>{
+    switch(activeTab){
+      case"about":return <AboutRole setTab={setActiveTab}/>;
+      case"process":return <InterviewProcess/>;
+      case"products":return <Products/>;
+      case"accounts":return <Accounts/>;
+      case"salestools":return <SalesTools/>;
+      case"handbook":return <Handbook/>;
+      case"kpis":return <KPIs/>;
+      case"objections":return <ObjectionHandler/>;
+      case"whygeneid":return <WhyGeneID/>;
+      case"workflow":return <Workflow/>;
+      case"insights":return <InsightsSellSheet/>;
+      case"competitive":return <CompetitorAnalysis/>;
+      case"training":return <Training/>;
+      case"deck":return <MeetingDeck/>;
+      default:return null;
+    }
+  };
+  return (
+    <div style={{fontFamily:"'Segoe UI',sans-serif",background:LG,minHeight:"100vh"}}>
+      <div style={{background:NAVY,padding:"0 16px",position:"sticky",top:0,zIndex:100,boxShadow:"0 2px 12px rgba(0,0,0,0.3)"}}>
+        <div style={{maxWidth:1100,margin:"0 auto"}}>
+          <div style={{display:"flex",alignItems:"center",gap:14,paddingTop:12,paddingBottom:8,borderBottom:"1px solid rgba(255,255,255,0.08)"}}>
+            <div>
+              <div style={{color:WHITE,fontWeight:900,fontSize:17,letterSpacing:1}}>GeneID</div>
+              <div style={{color:TEAL_MID,fontSize:8,fontWeight:700,letterSpacing:2,textTransform:"uppercase"}}>Candidate Resource Hub</div>
+            </div>
+            <div style={{marginLeft:"auto"}}>
+              <a href="mailto:careers@geneidlab.com" style={{background:GOLD,color:NAVY,fontWeight:800,fontSize:11,padding:"7px 14px",borderRadius:7,textDecoration:"none"}}>Apply → careers@geneidlab.com</a>
+            </div>
+          </div>
+          <div style={{display:"flex",gap:1,overflowX:"auto",paddingBottom:0}}>
+            {tabs.map(t=>(
+              <button key={t.id} onClick={()=>setActiveTab(t.id)} style={{padding:"7px 11px",border:"none",borderRadius:"5px 5px 0 0",background:activeTab===t.id?WHITE:"transparent",color:activeTab===t.id?NAVY:"rgba(255,255,255,0.5)",fontWeight:activeTab===t.id?700:400,fontSize:11,whiteSpace:"nowrap",borderBottom:activeTab===t.id?`2px solid ${GOLD}`:"2px solid transparent"}}>
+                {t.icon} {t.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+      <div style={{padding:"6px 0 56px"}}>{renderContent()}</div>
+      <div style={{background:NAVY,padding:"16px 24px",textAlign:"center"}}>
+        <a href="mailto:careers@geneidlab.com" style={{color:GOLD,fontWeight:700,fontSize:12,textDecoration:"none"}}>careers@geneidlab.com</a>
+        <span style={{color:"rgba(255,255,255,0.3)",margin:"0 10px"}}>|</span>
+        <span style={{color:"rgba(255,255,255,0.4)",fontSize:11}}>GeneID Advanced Molecular Diagnostics · GeneIDLab.com · Montvale, NJ · CLIA | CAP | CMS</span>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>
